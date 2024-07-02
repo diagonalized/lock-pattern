@@ -117,8 +117,19 @@ class LockPattern:
                 return dot
         return None
 
+    # ngl chatgpt wrote this one
     def add_to_selection(self, dot):
-        # if a dot, add it to the stack of selected
+        if self.selected_stack:
+            last_dot = self.selected_stack[-1]
+            mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
+            for other_dot in self.dots:
+                if other_dot not in self.selected_stack and other_dot != dot:
+                    distance = _point_to_segment_distance(
+                        other_dot.position, last_dot.position, mouse_pos)
+                    if distance < other_dot.radius:
+                        self.selected_stack.append(other_dot)
+                        other_dot.update_color(colors['selected'])
+
         if dot and dot not in self.selected_stack:
             self.selected_stack.append(dot)
             dot.update_color(colors['selected'])
@@ -162,3 +173,28 @@ class Dot:
 
     def update_color(self, color):
         self.color = color
+
+
+# helper function for calculating whether or not a dot is within
+# the line made between the most recent dot and mouse position
+def _point_to_segment_distance(point, segment_start, segment_end):
+    point = pygame.math.Vector2(point)
+    segment_start = pygame.math.Vector2(segment_start)
+    segment_end = pygame.math.Vector2(segment_end)
+
+    # Vector from segment_start to segment_end
+    line_vec = segment_end - segment_start
+    # Vector from segment_start to point
+    point_vec = point - segment_start
+    # Length of the line segment
+    line_len = line_vec.length()
+    # Unit vector of the line
+    line_unitvec = line_vec.normalize()
+    # Projection length of point_vec onto line_unitvec
+    proj_len = point_vec.dot(line_unitvec)
+    # Clamp projection length to [0, line_len]
+    proj_len = max(0, min(proj_len, line_len))
+    # Nearest point on the segment
+    nearest = segment_start + line_unitvec * proj_len
+    # Distance from point to nearest point on segment
+    return point.distance_to(nearest)
