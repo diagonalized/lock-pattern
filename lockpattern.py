@@ -12,8 +12,8 @@ colors = {
 }
 
 
-class Window:
-    def __init__(self):
+class Game:
+    def __init__(self, square_length):
         # setup window
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
@@ -21,7 +21,6 @@ class Window:
         self.FPS = 60
 
         # TODO: handle user input
-        square_length = 3
         self.lock_pattern = LockPattern(square_length)
 
         # run the program!
@@ -74,14 +73,17 @@ class LockPattern:
     def __init__(self, square_length: int):
         # length of lockpattern square
         self.square_length = square_length
-        # size of dot
-        self.dot_radius = 50
+        # size of dot, returns atleast 5 when n > 13
+        self.dot_radius = max(5, 50 - 5 * (self.square_length - 3))
+        # padding from the edges
+        self.padding = SCREEN_WIDTH // 9
         # gap between dots
-        self.gap = (7 / 6 * SCREEN_WIDTH) // self.square_length
+        self.gap = (SCREEN_WIDTH - 2 *
+                    self.padding) // (self.square_length - 1)
         # arbitrary thickness
-        self.thickness = 10
+        self.thickness = 10 - 5 * ((self.square_length - 1) // 13)
         # currently set to a radius length, tweak as you'd like
-        self.error = self.dot_radius
+        self.error = self.dot_radius  # * (2 ** (3 - self.square_length))
 
         # init dots
         self.dots = []
@@ -93,10 +95,8 @@ class LockPattern:
                     colors['unselected'],
                     # evenly spaced
                     pygame.math.Vector2(
-                        SCREEN_WIDTH // 9 + self.gap * \
-                        (i % self.square_length),
-                        SCREEN_HEIGHT // 9 + self.gap * \
-                        (i // self.square_length)
+                        self.padding + self.gap * (i % self.square_length),
+                        self.padding + self.gap * (i // self.square_length)
                     ),
                     # preset dot radius
                     self.dot_radius
@@ -112,7 +112,7 @@ class LockPattern:
         # uses self.error bc we love a user-friendly experience <3
         for dot in self.dots:
             distance = pygame.math.Vector2(mouse_pos).distance_to(dot.position)
-            if distance < self.dot_radius + self.error:
+            if distance < self.dot_radius:
                 dot.selected = True
                 return dot
         return None
@@ -184,10 +184,13 @@ def _point_to_segment_distance(point, segment_start, segment_end):
 
     # Vector from segment_start to segment_end
     line_vec = segment_end - segment_start
-    # Vector from segment_start to point
-    point_vec = point - segment_start
     # Length of the line segment
     line_len = line_vec.length()
+    # Check if the segment length is zero
+    if line_len == 0:
+        return point.distance_to(segment_start)
+    # Vector from segment_start to point
+    point_vec = point - segment_start
     # Unit vector of the line
     line_unitvec = line_vec.normalize()
     # Projection length of point_vec onto line_unitvec

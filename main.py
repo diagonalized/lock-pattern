@@ -1,9 +1,10 @@
-from lockpattern import Window
+from lockpattern import Game
 
 
 def main():
-    window = Window()
+    square_length = 3
 
+    window = Game(square_length)
     window.main_loop()
 
     print("Hello World!")
