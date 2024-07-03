@@ -2,7 +2,7 @@
 
 Basic gist will be: pattern plays, you try to repeat it!
 
-# TODO: 
+### TODO: 
 
 - [x] Add dynamic UI depending on square size
 - [ ] "Bots" that will play at a certain speed
